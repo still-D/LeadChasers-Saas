@@ -6,21 +6,39 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest run",
+    "bootstrap:leadership": "node --env-file=.env.local scripts/bootstrap-leadership.mjs"
   },
   "dependencies": {
+    "@hookform/resolvers": "^5.9.1",
+    "@radix-ui/react-slot": "^1.3.3",
+    "@react-pdf/renderer": "^4.8.1",
+    "@sentry/nextjs": "^10.71.0",
+    "@supabase/ssr": "^0.12.5",
+    "@supabase/supabase-js": "^2.112.4",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "inngest": "^4.18.1",
+    "lucide-react": "^1.34.0",
     "next": "16.3.3",
     "react": "19.2.8",
-    "react-dom": "19.2.8"
+    "react-dom": "19.2.8",
+    "react-hook-form": "^7.86.0",
+    "resend": "^6.22.1",
+    "tailwind-merge": "^3.6.0",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitejs/plugin-react": "^6.1.0",
     "eslint": "^9",
     "eslint-config-next": "16.3.3",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.11"
   }
 }
