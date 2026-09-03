@@ -407,6 +407,13 @@ button:disabled { cursor: not-allowed; opacity: .58; }
 .security-panel header p, .access-panel header p { margin: 0 0 4px; color: var(--green); font-size: 7px; font-weight: 850; letter-spacing: 1px; }
 .security-panel h2, .access-panel h2 { margin: 0; font: 850 15px var(--font-display); }
 .security-panel > p, .access-panel > p { margin: 18px 0; color: var(--muted); font-size: 9.5px; line-height: 1.7; }
+.account-password-form { display: grid; gap: 13px; border-top: 1px solid var(--border); padding-top: 18px; }
+.account-password-form .field { margin: 0; }
+.account-password-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.password-policy { margin: -2px 0 0; color: var(--muted); font-size: 8.5px; line-height: 1.55; }
+.account-password-form .form-notice { margin: 0; }
+.account-password-actions { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.account-password-actions > a { min-height: 40px; display: inline-flex; align-items: center; color: var(--green); font-size: 9px; font-weight: 800; }
 .finance-note { padding: 27px; }
 .finance-note h2 { margin: 0 0 8px; font: 850 19px var(--font-display); }
 .finance-note span { color: var(--muted); font-size: 10px; line-height: 1.7; }
@@ -859,6 +866,9 @@ html[data-theme="dark"] .quote-rejected,
 html[data-theme="dark"] .priority-chip.urgent { background: #3e211f; color: #ff938c; }
 html[data-theme="dark"] .permission-row.allowed { border-color: #31503f; background: #122219; }
 html[data-theme="dark"] .permission-row.denied { border-color: #2c3731; background: #121915; }
+html[data-theme="dark"] .account-password-form { border-top-color: #2c3932; }
+html[data-theme="dark"] .form-notice.success { border-color: #31503f; background: #122219; color: #68d49e; }
+html[data-theme="dark"] .form-notice.error { border-color: #58322e; background: #281816; color: #ffaaa3; }
 html[data-theme="dark"] .loading-skeleton { background: #243129; }
 html[data-theme="dark"] .loading-skeleton::after { background: linear-gradient(90deg, transparent, rgba(255,255,255,.08), transparent); }
 
@@ -985,6 +995,10 @@ body { overflow-x: clip; }
   .creation-panel,
   .security-panel,
   .access-panel { padding: 18px 16px; }
+  .account-password-grid { grid-template-columns: 1fr; }
+  .account-password-actions { align-items: stretch; flex-direction: column; }
+  .account-password-actions .button,
+  .account-password-actions > a { width: 100%; justify-content: center; }
   .project-board { scroll-snap-type: x proximity; padding: 12px; }
   .board-column { scroll-snap-align: start; }
   .pipeline-grid { scroll-snap-type: x proximity; }
