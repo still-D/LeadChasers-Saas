@@ -3,7 +3,9 @@
 import { useActionState, useState } from "react";
 import { Check, Minus, Plus, ReceiptText } from "lucide-react";
 import type { ServiceItem } from "@/lib/pricing";
-import { createQuote, initialQuoteActionState } from "./actions";
+import { createQuote, type QuoteActionState } from "./actions";
+
+const initialQuoteActionState: QuoteActionState = { status: "idle" };
 
 type Option = { id: string; label: string };
 

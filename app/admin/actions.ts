@@ -118,6 +118,9 @@ export async function updateMemberAction(_: MemberActionState, formData: FormDat
 
   const member = await getMemberById(parsed.data.memberId);
   if (!member || member.cooperative_id !== ctx.cooperativeId) return { status: "error", message: "Membre introuvable." };
+  if (member.is_founder && !ctx.profile.is_founder) {
+    return { status: "error", message: "Seul le fondateur peut modifier son profil protégé." };
+  }
   const selectedRole = (await listRoles()).find((role) => role.id === parsed.data.roleId && role.active);
   if (!selectedRole || (selectedRole.slug === "ceo" && !member.is_founder)) {
     return { status: "error", message: "Le rôle CEO est réservé au compte fondateur." };
@@ -129,7 +132,7 @@ export async function updateMemberAction(_: MemberActionState, formData: FormDat
     phone: parsed.data.phone,
     occupation: parsed.data.occupation,
     cooperative_position: parsed.data.cooperativePosition,
-    department_id: parsed.data.departmentId,
+    department_id: member.is_founder ? member.department_id : parsed.data.departmentId,
     role_id: member.is_founder ? member.role_id : parsed.data.roleId,
   });
 

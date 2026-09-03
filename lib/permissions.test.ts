@@ -1,5 +1,22 @@
 import { describe, it, expect } from "vitest";
-import { resolveEffectivePermission, type PermissionEffect } from "./permissions";
+import { normalizeSupabaseRelation, resolveEffectivePermission, type PermissionEffect } from "./permissions";
+
+describe("normalizeSupabaseRelation", () => {
+  const role = { slug: "ceo", active: true };
+
+  it("accepts the object shape returned for a to-one relationship", () => {
+    expect(normalizeSupabaseRelation(role)).toEqual(role);
+  });
+
+  it("accepts the legacy one-item array shape", () => {
+    expect(normalizeSupabaseRelation([role])).toEqual(role);
+  });
+
+  it("returns null for a missing relationship", () => {
+    expect(normalizeSupabaseRelation(null)).toBeNull();
+    expect(normalizeSupabaseRelation([])).toBeNull();
+  });
+});
 
 describe("resolveEffectivePermission", () => {
   it("denies when no role and no override", () => {

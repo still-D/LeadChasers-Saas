@@ -1,7 +1,9 @@
 "use client";
 
 import { useActionState } from "react";
-import { initialPasswordState, updatePassword } from "./actions";
+import { updatePassword, type PasswordState } from "./actions";
+
+const initialPasswordState: PasswordState = { status: "idle" };
 
 export function PasswordForm() {
   const [state, action, pending] = useActionState(updatePassword, initialPasswordState);

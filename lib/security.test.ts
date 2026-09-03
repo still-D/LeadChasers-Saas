@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { isCompanyEmail, isStrongPassword, normalizeEmail, safeInternalPath } from "./security";
+import { isCompanyEmail, isMatchingCompanyIdentity, isStrongPassword, normalizeEmail, safeInternalPath } from "./security";
 
 describe("employee account security", () => {
   it("normalizes and restricts accounts to the exact company domain", () => {
@@ -14,6 +14,13 @@ describe("employee account security", () => {
   it("requires a long mixed password", () => {
     expect(isStrongPassword("weakpassword")).toBe(false);
     expect(isStrongPassword("StrongPassword1!")).toBe(true);
+  });
+
+  it("binds the authenticated email to the employee profile", () => {
+    expect(isMatchingCompanyIdentity(" Saad@LeadChasers.ma ", "saad@leadchasers.ma")).toBe(true);
+    expect(isMatchingCompanyIdentity("saad@leadchasers.ma", "other@leadchasers.ma")).toBe(false);
+    expect(isMatchingCompanyIdentity("saad@example.com", "saad@example.com")).toBe(false);
+    expect(isMatchingCompanyIdentity("saad@leadchasers.ma", null)).toBe(false);
   });
 
   it("only accepts local redirect paths", () => {

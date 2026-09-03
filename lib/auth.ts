@@ -1,7 +1,7 @@
 import { redirect } from "next/navigation";
 import { createSupabaseServerClient, hasSupabaseConfig } from "@/lib/supabase/server";
 import { getMemberProfile, hasPermission, type MemberProfile } from "@/lib/permissions";
-import { isCompanyEmail } from "@/lib/security";
+import { isCompanyEmail, isMatchingCompanyIdentity } from "@/lib/security";
 
 export type EmployeeSession = {
   userId: string;
@@ -19,6 +19,7 @@ export async function getEmployeeSession(options: { allowInvited?: boolean } = {
 
   const profile = await getMemberProfile(user.id);
   if (!profile) return null;
+  if (!isMatchingCompanyIdentity(user.email, profile.email)) return null;
   if (profile.status !== "active" && !(options.allowInvited && profile.status === "invited")) return null;
   if (!profile.role.active || !profile.department.active) return null;
 

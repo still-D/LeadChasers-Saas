@@ -34,18 +34,32 @@ const postResponse = await fetch(url, {
   headers: { origin: new URL(url).origin },
 });
 const responseText = await postResponse.text();
+const setCookies = postResponse.headers.getSetCookie?.() ?? [];
+const sessionCookies = setCookies.filter((value) => value.includes("auth-token"));
 
 const result = {
   status: postResponse.status,
   location: postResponse.headers.get("location"),
-  setsSessionCookie: (postResponse.headers.getSetCookie?.() ?? [])
-    .some((value) => value.includes("auth-token")),
+  setsSessionCookie: sessionCookies.length > 0,
+  sessionCookiesHttpOnly: sessionCookies.length > 0 && sessionCookies.every((value) => /;\s*HttpOnly/i.test(value)),
+  sessionCookiesSameSiteLax: sessionCookies.length > 0 && sessionCookies.every((value) => /;\s*SameSite=Lax/i.test(value)),
   routesToPasswordUpdate: responseText.includes("/update-password"),
   containsCredentialError: responseText.includes("Identifiants incorrects"),
+  containsRateLimitError: responseText.includes("Trop de tentatives"),
+  containsConfigurationError: responseText.includes("n'est pas configur"),
+  containsDatabaseError: responseText.includes("base de donn"),
 };
 
 console.log(JSON.stringify(result));
 
-if (!result.setsSessionCookie || !result.routesToPasswordUpdate || result.containsCredentialError) {
+const reachesPasswordUpdate = result.location === "/update-password" || result.routesToPasswordUpdate;
+
+if (
+  !result.setsSessionCookie
+  || !result.sessionCookiesHttpOnly
+  || !result.sessionCookiesSameSiteLax
+  || !reachesPasswordUpdate
+  || result.containsCredentialError
+) {
   process.exitCode = 1;
 }

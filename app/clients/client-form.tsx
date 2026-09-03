@@ -1,7 +1,9 @@
 "use client";
 
 import { useActionState } from "react";
-import { createClient, initialClientActionState } from "./actions";
+import { createClient, type ClientActionState } from "./actions";
+
+const initialClientActionState: ClientActionState = { status: "idle" };
 
 export function ClientForm() {
   const [state, action, pending] = useActionState(createClient, initialClientActionState);

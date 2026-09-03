@@ -1,3 +1,5 @@
+import "server-only";
+
 import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
@@ -38,7 +40,15 @@ export async function createSupabaseServerClient() {
       cookies: {
         getAll() { return cookieStore.getAll(); },
         setAll(cookiesToSet) {
-          try { cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options)); }
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, {
+              ...options,
+              httpOnly: true,
+              secure: process.env.NODE_ENV === "production",
+              sameSite: "lax",
+              path: options.path ?? "/",
+            }));
+          }
           catch { /* Server Components cannot write cookies; Server Actions can. */ }
         },
       },

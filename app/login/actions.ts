@@ -4,7 +4,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { createSupabaseServerClient, hasSupabaseConfig } from "@/lib/supabase/server";
 import { getMemberProfile } from "@/lib/permissions";
-import { isCompanyEmail, normalizeEmail } from "@/lib/security";
+import { clearLoginAccountRateLimit, consumeLoginRateLimit } from "@/lib/rate-limit";
+import { isCompanyEmail, isMatchingCompanyIdentity, normalizeEmail } from "@/lib/security";
 import { type LoginActionState } from "./action-state";
 
 const loginSchema = z.object({
@@ -28,10 +29,15 @@ export async function login(_: LoginActionState, formData: FormData): Promise<Lo
     return { status: "error", message: "Vérifiez vos informations.", fieldErrors };
   }
 
+  const email = normalizeEmail(parsed.data.email);
+  const rateLimit = await consumeLoginRateLimit(email);
+  if (!rateLimit.allowed) {
+    return { status: "error", message: "Trop de tentatives. Patientez quelques minutes avant de réessayer." };
+  }
+
   const supabase = await createSupabaseServerClient();
   if (!supabase) return { status: "error", message: "Connexion à la base de données indisponible." };
 
-  const email = normalizeEmail(parsed.data.email);
   if (!isCompanyEmail(email)) return { status: "error", message: "Identifiants incorrects ou accès non autorisé." };
 
   const { data, error } = await supabase.auth.signInWithPassword({
@@ -42,10 +48,18 @@ export async function login(_: LoginActionState, formData: FormData): Promise<Lo
   if (error || !data.user) return { status: "error", message: "Identifiants incorrects ou accès non autorisé." };
 
   const profile = await getMemberProfile(data.user.id);
-  if (!profile || !["active", "invited"].includes(profile.status) || !profile.role.active || !profile.department.active) {
+  if (
+    !profile
+    || !isMatchingCompanyIdentity(data.user.email ?? email, profile.email)
+    || !["active", "invited"].includes(profile.status)
+    || !profile.role.active
+    || !profile.department.active
+  ) {
     await supabase.auth.signOut();
     return { status: "error", message: "Identifiants incorrects ou accès non autorisé." };
   }
+
+  await clearLoginAccountRateLimit(email);
 
   if (profile.status === "invited" || data.user.user_metadata?.must_change_password === true) {
     redirect("/update-password");

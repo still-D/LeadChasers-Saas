@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { safeInternalPath } from "@/lib/security";
+import { getMemberProfile } from "@/lib/permissions";
+import { createPasswordRecoveryToken, PASSWORD_RECOVERY_COOKIE, passwordRecoveryCookieOptions } from "@/lib/password-recovery";
+import { isMatchingCompanyIdentity, safeInternalPath } from "@/lib/security";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -14,5 +16,29 @@ export async function GET(request: Request) {
 
   const { error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) return NextResponse.redirect(new URL("/login?error=invalid_link", url.origin));
-  return NextResponse.redirect(new URL(next, url.origin));
+
+  const { data: { user } } = await supabase.auth.getUser();
+  const profile = user ? await getMemberProfile(user.id) : null;
+  if (
+    !user?.email
+    || !profile
+    || !isMatchingCompanyIdentity(user.email, profile.email)
+    || !["active", "invited"].includes(profile.status)
+    || !profile.role.active
+    || !profile.department.active
+  ) {
+    await supabase.auth.signOut();
+    return NextResponse.redirect(new URL("/login?error=invalid_link", url.origin));
+  }
+
+  const response = NextResponse.redirect(new URL(next, url.origin));
+  if (next === "/update-password") {
+    const recoveryToken = createPasswordRecoveryToken(user.id);
+    if (!recoveryToken) {
+      await supabase.auth.signOut();
+      return NextResponse.redirect(new URL("/login?error=invalid_link", url.origin));
+    }
+    response.cookies.set(PASSWORD_RECOVERY_COOKIE, recoveryToken, passwordRecoveryCookieOptions);
+  }
+  return response;
 }

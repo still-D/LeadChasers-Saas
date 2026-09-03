@@ -7,7 +7,6 @@ import { logAudit } from "@/lib/permissions";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 
 export type ClientActionState = { status: "idle" | "success" | "error"; message?: string; fieldErrors?: Record<string, string> };
-export const initialClientActionState: ClientActionState = { status: "idle" };
 
 const schema = z.object({
   name: z.string().trim().min(2, "Le nom est requis.").max(140),

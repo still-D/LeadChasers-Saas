@@ -7,7 +7,6 @@ import { logAudit } from "@/lib/permissions";
 import { createSupabaseServiceClient } from "@/lib/supabase/server";
 
 export type QuoteActionState = { status: "idle" | "success" | "error"; message?: string };
-export const initialQuoteActionState: QuoteActionState = { status: "idle" };
 
 const schema = z.object({
   clientId: z.union([z.string().uuid(), z.literal("")]),

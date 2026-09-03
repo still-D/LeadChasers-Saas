@@ -10,6 +10,14 @@ export function isCompanyEmail(value: string): boolean {
   return parts.length === 2 && parts[0].length > 0 && parts[1] === COMPANY_EMAIL_DOMAIN;
 }
 
+export function isMatchingCompanyIdentity(authEmail: string, profileEmail: string | null | undefined): boolean {
+  return Boolean(
+    profileEmail
+    && isCompanyEmail(authEmail)
+    && normalizeEmail(authEmail) === normalizeEmail(profileEmail),
+  );
+}
+
 export function isStrongPassword(value: string): boolean {
   return (
     value.length >= 12 &&

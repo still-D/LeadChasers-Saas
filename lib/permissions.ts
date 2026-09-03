@@ -70,6 +70,16 @@ type PermissionResolution = {
   isFounder: boolean;
 };
 
+/**
+ * PostgREST returns a to-one relationship as an object. Some generated client
+ * types and older responses represent the same relationship as a one-item
+ * array, so normalize both shapes at the data boundary.
+ */
+export function normalizeSupabaseRelation<T>(value: T | T[] | null | undefined): T | null {
+  if (Array.isArray(value)) return value[0] ?? null;
+  return value ?? null;
+}
+
 async function resolvePermissions(userId: string): Promise<PermissionResolution> {
   if (!hasSupabaseConfig()) return { roleSlug: null, rolePermissions: new Set(), overrides: new Map(), isFounder: false };
   const supabase = createSupabaseServiceClient();
@@ -82,13 +92,13 @@ async function resolvePermissions(userId: string): Promise<PermissionResolution>
     .limit(1)
     .maybeSingle();
 
-  const departmentRows = (member?.departments ?? []) as { active: boolean }[];
-  if (!member || member.status !== "active" || !departmentRows[0]?.active) {
+  const department = normalizeSupabaseRelation(member?.departments);
+  if (!member || member.status !== "active" || !department?.active) {
     return { roleSlug: null, rolePermissions: new Set(), overrides: new Map(), isFounder: false };
   }
 
-  const roleRows = (member.roles ?? []) as { slug: string; active: boolean }[];
-  const roleSlug = roleRows[0]?.active ? roleRows[0].slug : null;
+  const role = normalizeSupabaseRelation(member.roles);
+  const roleSlug = role?.active ? role.slug : null;
   const roleId = roleSlug ? member.role_id : null;
 
   const rolePermissions = new Set<string>();
@@ -98,7 +108,7 @@ async function resolvePermissions(userId: string): Promise<PermissionResolution>
       .select("permissions:permission_id (slug)")
       .eq("role_id", roleId);
     for (const row of perms ?? []) {
-      const perm = (row.permissions as { slug: string }[] | null)?.[0];
+      const perm = normalizeSupabaseRelation(row.permissions);
       if (perm?.slug) rolePermissions.add(perm.slug);
     }
   }
@@ -110,7 +120,7 @@ async function resolvePermissions(userId: string): Promise<PermissionResolution>
 
   const overrideMap = new Map<string, PermissionEffect>();
   for (const row of overrides ?? []) {
-    const perm = (row.permissions as { slug: string }[] | null)?.[0];
+    const perm = normalizeSupabaseRelation(row.permissions);
     if (perm?.slug) overrideMap.set(perm.slug, row.effect as PermissionEffect);
   }
 
@@ -191,8 +201,8 @@ export async function getMemberProfile(userId: string): Promise<MemberProfile | 
     .single();
 
   if (!data) return null;
-  const roleRow = (data.roles as { id: string; name: string; slug: string; description: string | null; active: boolean; is_system_role: boolean }[] | null)?.[0];
-  const deptRow = (data.departments as { id: string; name: string; description: string | null; active: boolean }[] | null)?.[0];
+  const roleRow = normalizeSupabaseRelation(data.roles);
+  const deptRow = normalizeSupabaseRelation(data.departments);
   if (!roleRow || !deptRow) return null;
 
   return {
@@ -218,8 +228,8 @@ export async function getMemberById(id: string): Promise<MemberProfile | null> {
     .single();
 
   if (!data) return null;
-  const roleRow = (data.roles as { id: string; name: string; slug: string; description: string | null; active: boolean; is_system_role: boolean }[] | null)?.[0];
-  const deptRow = (data.departments as { id: string; name: string; description: string | null; active: boolean }[] | null)?.[0];
+  const roleRow = normalizeSupabaseRelation(data.roles);
+  const deptRow = normalizeSupabaseRelation(data.departments);
   if (!roleRow || !deptRow) return null;
 
   return {
@@ -244,8 +254,8 @@ export async function listMembers(cooperativeId: string): Promise<MemberProfile[
     .order("created_at", { ascending: false });
 
   return (data ?? []).map((row) => {
-    const roleRow = (row.roles as { id: string; name: string; slug: string; description: string | null; active: boolean; is_system_role: boolean }[] | null)?.[0];
-    const deptRow = (row.departments as { id: string; name: string; description: string | null; active: boolean }[] | null)?.[0];
+    const roleRow = normalizeSupabaseRelation(row.roles);
+    const deptRow = normalizeSupabaseRelation(row.departments);
     return {
       ...row,
       role: roleRow as Role,
@@ -292,7 +302,7 @@ export async function getRolePermissions(roleId: string): Promise<Permission[]> 
 
   const perms: Permission[] = [];
   for (const row of data ?? []) {
-    const perm = (row.permissions as Permission[] | null)?.[0];
+    const perm = normalizeSupabaseRelation(row.permissions);
     if (perm) perms.push(perm);
   }
   return perms.sort((a, b) => a.resource.localeCompare(b.resource) || a.action.localeCompare(b.action));
@@ -308,7 +318,7 @@ export async function getUserOverrides(userId: string): Promise<UserPermissionOv
     .eq("user_id", userId);
 
   return (data ?? []).map((row) => {
-    const perm = (row.permissions as Permission[] | null)?.[0];
+    const perm = normalizeSupabaseRelation(row.permissions);
     return { ...row, permission: perm as Permission } as UserPermissionOverride;
   });
 }
