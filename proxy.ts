@@ -1,13 +1,27 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+function firstConfiguredValue(...values: Array<string | undefined>) {
+  return values.map((value) => value?.trim()).find(Boolean) ?? null;
+}
+
+function getSupabaseRuntimeConfig() {
+  return {
+    url: firstConfiguredValue(process.env.SUPABASE_URL, process.env.NEXT_PUBLIC_SUPABASE_URL),
+    key: firstConfiguredValue(
+      process.env.SUPABASE_PUBLISHABLE_KEY,
+      process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    ),
+  };
+}
+
 function buildContentSecurityPolicy(nonce: string) {
   const isDevelopment = process.env.NODE_ENV === "development";
   let supabaseOrigin = "";
   let supabaseWebSocketOrigin = "";
 
   try {
-    const parsed = new URL(process.env.NEXT_PUBLIC_SUPABASE_URL ?? "");
+    const parsed = new URL(getSupabaseRuntimeConfig().url ?? "");
     supabaseOrigin = parsed.origin;
     supabaseWebSocketOrigin = `${parsed.protocol === "https:" ? "wss:" : "ws:"}//${parsed.host}`;
   } catch {
@@ -58,8 +72,7 @@ function applySecurityHeaders(response: NextResponse, contentSecurityPolicy: str
 }
 
 export async function proxy(request: NextRequest) {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const key = process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
+  const { url, key } = getSupabaseRuntimeConfig();
   const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
   const contentSecurityPolicy = buildContentSecurityPolicy(nonce);
   const requestHeaders = new Headers(request.headers);

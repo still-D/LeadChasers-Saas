@@ -4,13 +4,31 @@ import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
 
+function firstConfiguredValue(...values: Array<string | undefined>) {
+  return values.map((value) => value?.trim()).find(Boolean) ?? null;
+}
+
+export function getSupabaseUrl() {
+  return firstConfiguredValue(
+    process.env.SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+  );
+}
+
+export function getSupabasePublishableKey() {
+  return firstConfiguredValue(
+    process.env.SUPABASE_PUBLISHABLE_KEY,
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+  );
+}
+
 export function hasSupabaseConfig() {
-  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY);
+  return Boolean(getSupabaseUrl() && getSupabasePublishableKey());
 }
 
 export function hasSupabaseServiceConfig() {
   return Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL &&
+    getSupabaseUrl() &&
     (process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY),
   );
 }
@@ -19,7 +37,7 @@ export function createSupabaseServiceClient() {
   if (!hasSupabaseServiceConfig()) return null;
   const secretKey = process.env.SUPABASE_SECRET_KEY ?? process.env.SUPABASE_SERVICE_ROLE_KEY;
   return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    getSupabaseUrl()!,
     secretKey!,
     {
       auth: {
@@ -34,8 +52,8 @@ export async function createSupabaseServerClient() {
   if (!hasSupabaseConfig()) return null;
   const cookieStore = await cookies();
   return createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    getSupabaseUrl()!,
+    getSupabasePublishableKey()!,
     {
       cookies: {
         getAll() { return cookieStore.getAll(); },

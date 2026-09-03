@@ -13,7 +13,7 @@ Private operations platform for LeadChasers Media Coop. It centralizes the agenc
 
 ## Local setup
 
-1. Copy `.env.example` to `.env.local` and provide the Supabase URL, publishable key, and server-only secret key. Legacy projects may use `SUPABASE_SERVICE_ROLE_KEY` instead of `SUPABASE_SECRET_KEY`.
+1. Copy `.env.example` to `.env.local` and provide the Supabase URL, publishable key, and server-only secret key. The app accepts either `NEXT_PUBLIC_SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` or the server-hosted aliases `SUPABASE_URL` / `SUPABASE_PUBLISHABLE_KEY`. Legacy projects may use `SUPABASE_SERVICE_ROLE_KEY` instead of `SUPABASE_SECRET_KEY`.
 2. Apply every SQL file in `supabase/migrations` in filename order.
 3. Bootstrap the leadership accounts:
 
